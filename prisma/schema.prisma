@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - synced from Clerk via webhook
+model User {
+  id                String      @id // Clerk user ID
+  email             String      @unique
+  firstName         String?
+  lastName          String?
+  imageUrl          String?
+
+  // Invitation tracking
+  invitationId      String?
+  invitation        Invitation? @relation(fields: [invitationId], references: [id])
+
+  // Metadata
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  lastSignInAt      DateTime?
+
+  // Relations
+  createdInvitations Invitation[] @relation("CreatedBy")
+
+  @@index([email])
+}
+
+// Invitation model - for invite-only access
+model Invitation {
+  id          String    @id @default(uuid())
+  code        String    @unique @default(cuid())
+
+  // Optional: pre-assign to specific email
+  email       String?
+
+  // Usage tracking
+  usedBy      User[]
+  maxUses     Int       @default(1) // For future: allow multi-use invites
+  usesCount   Int       @default(0)
+
+  // Created by
+  createdById String?
+  createdBy   User?     @relation("CreatedBy", fields: [createdById], references: [id])
+
+  // Expiration
+  expiresAt   DateTime?
+
+  // Metadata
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([code])
+  @@index([email])
+}

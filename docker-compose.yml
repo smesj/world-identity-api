@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: world-identity-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: identity
+      POSTGRES_PASSWORD: identity_dev_pass
+      POSTGRES_DB: world_identity
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U identity -d world_identity']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
