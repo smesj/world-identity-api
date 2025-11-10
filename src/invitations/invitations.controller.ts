@@ -9,10 +9,9 @@ export class InvitationsController {
   @Post()
   create(
     @Body('createdById') createdById?: string,
-    @Body('email') email?: string,
     @Body('expiresInDays') expiresInDays?: number,
   ) {
-    return this.invitationsService.create(createdById, email, expiresInDays);
+    return this.invitationsService.create(createdById, expiresInDays);
   }
 
   @Get()
@@ -26,8 +25,8 @@ export class InvitationsController {
   }
 
   @Post('use')
-  use(@Body('code') code: string, @Body('userId') userId: string) {
-    return this.invitationsService.use(code, userId);
+  use(@Body('code') code: string) {
+    return this.invitationsService.use(code);
   }
 
   @Get(':code/qr')

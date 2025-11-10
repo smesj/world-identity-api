@@ -9,9 +9,6 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: {
-        invitation: true,
-      },
     });
 
     if (!user) {
@@ -25,9 +22,6 @@ export class UsersService {
   async findByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: {
-        invitation: true,
-      },
     });
 
     if (!user) {
@@ -40,9 +34,6 @@ export class UsersService {
   // Get all users
   async findAll() {
     return this.prisma.user.findMany({
-      include: {
-        invitation: true,
-      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -54,9 +45,6 @@ export class UsersService {
         id: {
           in: ids,
         },
-      },
-      include: {
-        invitation: true,
       },
     });
   }

@@ -7,14 +7,13 @@ export class InvitationsService {
   constructor(private prisma: PrismaService) {}
 
   // Generate a new invitation code
-  async create(createdById?: string, email?: string, expiresInDays?: number) {
+  async create(createdById?: string, expiresInDays?: number) {
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
       : null;
 
     return this.prisma.invitation.create({
       data: {
-        email,
         createdById,
         expiresAt,
       },
@@ -25,7 +24,6 @@ export class InvitationsService {
   async validate(code: string) {
     const invitation = await this.prisma.invitation.findUnique({
       where: { code },
-      include: { usedBy: true },
     });
 
     if (!invitation) {
@@ -47,14 +45,13 @@ export class InvitationsService {
       invitation: {
         id: invitation.id,
         code: invitation.code,
-        email: invitation.email,
         usesRemaining: invitation.maxUses - invitation.usesCount,
       },
     };
   }
 
-  // Use an invitation code (link to a user)
-  async use(code: string, userId: string) {
+  // Use an invitation code (increment usage counter)
+  async use(code: string) {
     const invitation = await this.prisma.invitation.findUnique({
       where: { code },
     });
@@ -65,26 +62,6 @@ export class InvitationsService {
 
     // Validate before use
     await this.validate(code);
-
-    // Check if user already used this code
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        id: userId,
-        invitationId: invitation.id,
-      },
-    });
-
-    if (existingUser) {
-      throw new BadRequestException('User has already used this invitation code');
-    }
-
-    // Update user with invitation
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        invitationId: invitation.id,
-      },
-    });
 
     // Increment uses count
     await this.prisma.invitation.update({
@@ -101,14 +78,6 @@ export class InvitationsService {
   async findAll() {
     return this.prisma.invitation.findMany({
       include: {
-        usedBy: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
         createdBy: {
           select: {
             id: true,
@@ -126,16 +95,6 @@ export class InvitationsService {
   async findByCode(code: string) {
     const invitation = await this.prisma.invitation.findUnique({
       where: { code },
-      include: {
-        usedBy: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
     });
 
     if (!invitation) {
